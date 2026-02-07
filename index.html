@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Will you be my Valentine?</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #ffe6f0, #fff0f5);
+      text-align: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    #message {
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+      color: #ff4d88;
+      min-height: 1.5em;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      transition: opacity 0.2s ease;
+    }
+
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    button {
+      padding: 14px 24px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      border-radius: 12px;
+    }
+
+    #yesBtn {
+      background-color: #ff4d88;
+      color: white;
+      border: none;
+      position: relative;
+      z-index: 10;
+    }
+
+    #noBtn {
+        background-color: #e0e0e0;
+        border: none;
+        position: relative; /* start in normal flow */
+        transition: left 0.15s ease, top 0.15s ease, transform 0.2s ease;
+    }
+
+    .result {
+      display: none;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background-color: pink;
+      opacity: 0.8;
+      animation: fall 2.5s linear forwards;
+      pointer-events: none;
+    }
+
+    @keyframes fall {
+      from {
+        transform: translateY(-10px) rotate(0deg);
+      }
+      to {
+        transform: translateY(110vh) rotate(360deg);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 500px) {
+      button {
+        font-size: 1.3rem;
+        padding: 18px 30px;
+      }
+
+      h1 {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    <!-- Page load GIF -->
+    <img id="loadGif" src="page_load.gif" alt="Loading..." style="width: 450px; margin-bottom: 20px; display: none;">
+
+    
+
+    <h1 id="title">Will you be my Valentine? 💘</h1>
+
+    <div id="message"></div>
+
+    <div class="buttons">
+      <button id="yesBtn">Yes</button>
+      <button id="noBtn">No</button>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <!-- Yes clicked GIF -->
+    <img id="yesGif" src="celebrate.gif" alt="Yay!" style="width: 500px; margin-bottom: 20px; display: none;">
+    <h1>YAYYY 💖 I knew it 😌</h1>
+    <p>Best Valentine ever 🥹</p>
+    <p>See you on Feb 14th 😏</p>
+  </div>
+
+
+  <script>
+    let yesSize = 1;
+    let noSize = 1;
+    let messageIndex = 0;
+
+    const messages = [
+        "Is it man?!",
+        "But the stars are aligned for YES 🌟",
+        "Wrong answer 😤",
+        "Molefe don't run. DON'T RUN.",
+        "I'll help you with your CV 😊",
+        "Imma moer you one time",
+        "I won't voetsek this easy 💔",
+        "Try again buddy…",
+        "JY WENDY",
+        "Last chance… 😌",
+        "Martin from Delft is going to come get you.",
+        "I'll get you that 911",
+        "You know you want to 🥰",
+        "Don't be a naai",
+        "You can’t escape destiny 💘",
+        "Haibo sisi"
+    ];
+
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const message = document.getElementById("message");
+    const buttons = document.querySelector(".buttons");
+    const result = document.getElementById("result");
+
+    let noHasMoved = false;
+
+    noBtn.addEventListener("click", () => {
+    if (!noHasMoved) {
+        const rect = noBtn.getBoundingClientRect();
+        noBtn.style.position = "fixed";
+        noBtn.style.left = rect.left + "px";
+        noBtn.style.top = rect.top + "px";
+        noBtn.style.zIndex = 20; // <-- ensures No is on top
+        noHasMoved = true;
+    }
+
+    yesSize *= 1.2;
+
+    yesBtn.style.fontSize = 1.1 * yesSize + "rem";
+    yesBtn.style.padding = `${14 * yesSize}px ${24 * yesSize}px`;
+    
+    const yesRect = yesBtn.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // If Yes is nearly filling the screen, hide No
+    if (yesRect.width >= viewportWidth * 0.5 || yesRect.height >= viewportHeight * 0.5) {
+        loadGif.style.display = "none";
+    }
+
+    // If Yes is nearly filling the screen, hide No
+    if (yesRect.width >= viewportWidth * 1.2 || yesRect.height >= viewportHeight * 1.2) {
+        noBtn.style.opacity = 0;
+        noBtn.style.pointerEvents = "none";
+        return; // skip moveNoButtonSafely
+    }
+
+    noSize *= 0.95;
+
+    noBtn.style.transform = `scale(${noSize})`;
+
+    const currentMessage = messages[messageIndex % messages.length];
+    noBtn.textContent = currentMessage;
+
+    messageIndex++;
+
+    moveNoButtonSafely();
+    });
+
+    yesBtn.addEventListener("click", () => {
+        buttons.classList.add("hidden");
+        
+        document.getElementById("app").style.display = "none";
+        
+        result.classList.add("show");
+        // Show Yes GIF
+        const yesGif = document.getElementById("yesGif");
+        yesGif.style.display = "block";
+        launchConfetti();
+
+        // Second burst after 300ms
+        setTimeout(() => {
+            launchConfetti();
+        }, 2000);
+
+        // Second burst after 300ms
+        setTimeout(() => {
+            launchConfetti();
+        }, 7000);
+
+    });
+
+
+    window.addEventListener("load", () => {
+        const loadGif = document.getElementById("loadGif");
+        loadGif.style.display = "block";
+    });
+
+    function launchConfetti() {
+      for (let i = 0; i < 80; i++) {
+        const confetti = document.createElement("div");
+        confetti.className = "confetti";
+        confetti.style.left = Math.random() * 100 + "vw";
+        confetti.style.animationDuration = (Math.random() * 2 + 1.5) + "s";
+        confetti.style.opacity = Math.random();
+        document.body.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 7000);
+      }
+    }
+
+    function moveNoButtonSafely() {
+        const padding = 20;
+
+        const yesRect = yesBtn.getBoundingClientRect();
+        const noRect = noBtn.getBoundingClientRect();
+        const titleRect = document.getElementById("title").getBoundingClientRect();
+
+        const loadGif = document.getElementById("loadGif");
+        const gifRect = loadGif.style.display !== "none" 
+            ? loadGif.getBoundingClientRect() 
+            : null;
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let x, y;
+        let tries = 0;
+
+        do {
+            x = Math.random() * (viewportWidth - noRect.width - padding * 2) + padding;
+            y = Math.random() * (viewportHeight - noRect.height - padding * 2) + padding;
+            tries++;
+
+            const overlapsYes =
+                x < yesRect.right &&
+                x + noRect.width > yesRect.left &&
+                y < yesRect.bottom &&
+                y + noRect.height > yesRect.top;
+
+            const overlapsTitle =
+                x < titleRect.right &&
+                x + noRect.width > titleRect.left &&
+                y < titleRect.bottom &&
+                y + noRect.height > titleRect.top;
+
+            let overlapsGif = false;
+            if (gifRect) {
+                overlapsGif =
+                    x < gifRect.right &&
+                    x + noRect.width > gifRect.left &&
+                    y < gifRect.bottom &&
+                    y + noRect.height > gifRect.top;
+            }
+
+            // Only accept positions that don't overlap anything important
+            if (!overlapsYes && !overlapsTitle && !overlapsGif) break;
+
+        } while (tries < 40);
+
+    // If we found a safe spot, move. Otherwise don't move at all.
+    if (tries < 40) {
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
+    }
+}
+
+
+  </script>
+
+</body>
+</html>
